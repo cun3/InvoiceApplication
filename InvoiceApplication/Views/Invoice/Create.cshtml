@@ -1,0 +1,86 @@
+﻿@model InvoiceApplication.Models.Invoice
+@{
+    ViewBag.Title = "Create Invoice";
+}
+
+<h2>Create Invoice</h2>
+
+@using (Html.BeginForm()) 
+{
+    @Html.AntiForgeryToken()
+    
+    <div class="form-horizontal">
+        <h4>Invoice</h4>
+        <hr />
+        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+        <div class="form-group">
+            @Html.Label(" ","Customer Name",new { @class = "control-label col-md-2" } )
+            <div class="col-md-10">
+                @Html.DropDownList("customerID", null, htmlAttributes: new { @class = "form-control" })
+                @Html.ValidationMessageFor(model => model.customerID, "", new { @class = "text-danger" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.Label(" ", "Product Name", new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.DropDownList("productId", null, htmlAttributes: new { @class = "form-control", id = "ddProduct" })
+                @Html.ValidationMessageFor(model => model.productId, "", new { @class = "text-danger" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.Label(" ", "Quantity", new { @class = "control-label col-md-2" })
+            <div class="col-md-8">
+                @Html.EditorFor(model => model.quantity, new { htmlAttributes = new { @class = "form-control",id="txtQuantity" } })
+                @Html.ValidationMessageFor(model => model.quantity, "", new { @class = "text-danger" })
+               <br>@Html.Label(" ", new { @class = "text-danger",id="quantvalidation" }) 
+            </div>           
+        </div>
+                
+
+        <div class="form-group">
+            <div class="col-md-offset-2 col-md-10">
+                <input type="submit" value="Create" class="btn btn-default" />
+            </div>
+        </div>
+    </div>
+}
+
+<div>
+    @Html.ActionLink("Back to List", "Index")
+</div>
+
+
+    @section scripts {
+        <script>   
+            $('#txtQuantity').on('input', function () {
+                var quant = $('#txtQuantity').val();
+                if ($('#txtQuantity').val() == "")
+                {
+                    quant = 0;
+                }
+                console.log(quant);
+        $.ajax({
+            type:"POST",
+            url: '@Url.Action("Validate", "Invoice")',
+            data: { 'quantity': quant, 'pid': $('#ddProduct').val() },
+            success: function (response) {
+                console.log(response);
+                if (response == "Limit Exceeded.") {
+                    $('#quantvalidation').text('This exceeds the permissible total invoice limit');
+                    $('.btn').attr("disabled", "disabled");
+                }
+                else if (response == "Warning."){
+                    $('#quantvalidation').text('The total invoice is nearing the maximum limit');
+                    $('.btn').removeAttr('disabled');
+                }
+                else if (response == "Limit Not Exceeded.") {
+                    $('#quantvalidation').text(' ');
+                    $('.btn').removeAttr('disabled');
+                }
+            }
+        })
+    });
+</script>
+}
